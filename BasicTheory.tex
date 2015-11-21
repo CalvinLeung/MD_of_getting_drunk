@@ -9,11 +9,6 @@
 
 \geometry{margin = 1in}
 
-\newcommand{\unit}[1]{\hat{\bm{#1}}}
-\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
-\newcommand{\mm}[1]{\underline{\bm{#1}}}
-\newcommand{\mmt}[1]{\tilde{\mm{#1}}}
-
 \begin{document}                                                             
 
 \noindent Timothy Middlemas \hfill Initial Literature Review
@@ -27,14 +22,19 @@
 \vspace{1 mm}
 
 \section{Motivation}
-Test \cite{LLFluids}.
+We would like to make a computational model of the blood-brain barrier. The blood brain barrier is composed of a epithelial cells that form what is known as "tight junctions," which greatly inhibit paracellular (between cells) diffusion \cite{PajouheshLenz2005}. This means that there are two principle methods of transport for small molecules, lipid-mediated diffusion and carrier-mediated transport \cite{Pardridge2012}. Carrier mediated transport is saturable \cite{Pardridge2012}, and we won't attempt to model this phenomenon, although it is interesting in and of itself, as several drugs, including L-DOPA \cite{Pardridge2005} and caffeine \cite{McCallMillingtonWurtman1982} are transported in this manner (see \textit{Physical Chemistry} by Atkins and de Paula for an introduction to the chemical kinetics of saturable phenomena). Thus, we would like to model the lipid-mediated diffusion that takes place \textit{through} the cell membrane \cite{PajouheshLenz2005}, and attempt to make a model that captures the common assertion that lipid-mediated diffusion is only significant for molecules with a molecular weight of less than about $400$ Da and that form $<$ 8 hydrogen bonds \cite{Pardridge2012}.
 \section{From Computation to a Model of Transport}
-
+We should have two basic simulation methods for diffusion, which are random walks and Brownian motion. These simulations can be run purely as mathematical simulations, but in order to make contact with the physics of the blood-brain barrier, we need three estimates. We need the diffusion constant which can be obtained from a simple model of the fluid, the typical molecular properties of therapeutically interesting drugs, and the typical physical spacings presented by the cell membranes.
 \section{The Diffusion Constant}
-
+In 3 dimensions, the diffusion constant is given by \cite{LLFluids}
+$$D = \frac{kT}{6\pi \eta R},$$
+where $R$ is the radius of the particle and $\eta$ is related to the viscosity of the fluid. For water \cite{LLFluids},
+$$\eta = 0.010\,\text{g/cm sec}.$$
+This expression may have to be altered in two dimensions, we should do the calculation described in Landau and Lifshitz.
 \section{Molecular Properties}
-
+As stated above, the molecular requirements for diffusion across the blood brain barrier is a molecular weight of less than 400 Da and the formation of less than 8 hydrogen bonds. This translates into surface areas of about 52 \AA$^2$ for a molecule of about 200 Da to 105 \AA$^2$ for a molecule of about 450 Da \cite{Pardridge2005}. The polarity requirements may be able to be modeled by a concept known as polar surface area (PSA) \cite{PajouheshLenz2005}, although I have not looked too closely into the problem.
 \section{Barrier Properties}
+I haven't found much in the way of parameters giving barrier properties, although some of the papers already mentioned cite other papers that may give useful estimates.
 
 \bibliographystyle{plain}
 \bibliography{ProjectBib}
