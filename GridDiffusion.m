@@ -1,20 +1,20 @@
-gridSize = 1000;
-particles = 50;
+gridSize = 100; % make this even
+particles = 100;
 wallGap = 5;
-xPos = zeros(particles);
-yPos = zeros(particles);
-wallProfile = zeros(gridSize);
+xPos = zeros(1,particles);
+yPos = zeros(1,particles);
+wallProfile = zeros(1,gridSize);
 wallPos = gridSize/2;
-timesteps = 100;
+timesteps = 9000;
 
-% initialize the wall (-1s on the grid)
+% initialize the wall
 for i = 1:gridSize
-    if mod(i,2*wallGap)>wallGap
-        wallProfile = 1;
+    if mod(i,2*wallGap)>=wallGap
+        wallProfile(i) = 1; % 1 is a wall, 0 is a hole
     end
 end
 
-% initialize particle positions (denoted 1 through "particles"):
+% initialize particle positions (indexed as 1 through "particles"):
 for i = 1:particles
     loop = true;
     while loop
@@ -34,32 +34,33 @@ end
 
 % run timesteps
 for t = 1:timesteps
+    leftparticles = 0;
+    rightparticles = 0;
+    particleMatrix = zeros(gridSize);
+    for k = 1:gridSize
+       particleMatrix(wallPos, k) = 2*wallProfile(k); 
+    end
     for p = 1:particles
-        
         % only allow certain directions
         allowedDirs = [1,1,1,1]; % up, down, right, left
         if yPos(p) == gridSize
             allowedDirs(1) = 0; % can't go up
-        end
-        if and((xPos(p) == wallPos), (wallProfile(yPos(p)+1) == 1))
+        elseif and((xPos(p) == wallPos), (wallProfile(yPos(p)+1) == 1))
             allowedDirs(1) = 0; % can't go up
         end
-        if yPos(p) == 0
+        if yPos(p) == 1
             allowedDirs(2) = 0; % can't go down
-        end
-        if and((xPos(p) == wallPos), (wallProfile(yPos(p)-1) == 1))
+        elseif and((xPos(p) == wallPos), (wallProfile(yPos(p)-1) == 1))
             allowedDirs(2) = 0; % can't go down
         end
         if xPos(p) == gridSize
             allowedDirs(3) = 0; % can't go right
-        end
-        if and((xPos(p) == wallPos-1), (wallProfile(yPos(p)) == 1))
+        elseif and((xPos(p) == wallPos-1), (wallProfile(yPos(p)) == 1))
             allowedDirs(3) = 0; % can't go right
         end
-        if xPos(p) == 0
+        if xPos(p) == 1
             allowedDirs(4) = 0; % can't go left
-        end
-        if and((xPos(p) == wallPos+1), (wallProfile(yPos(p)) == 1))
+        elseif and((xPos(p) == wallPos+1), (wallProfile(yPos(p)) == 1))
             allowedDirs(4) = 0; % can't go left
         end
         
@@ -84,5 +85,22 @@ for t = 1:timesteps
             xPos(p)=xPos(p)-1; % go left
         end
         
-    end    
+        if xPos(p) >= wallPos
+            rightparticles = rightparticles + 1;
+        else
+            leftparticles = leftparticles + 1;
+        end
+        
+        particleMatrix(xPos(p), yPos(p)) = 1;
+        
+    end 
+    %disp(t);
+    %disp(leftparticles);
+    %disp(rightparticles);
 end
+
+% output matrix
+disp(t);
+disp(leftparticles);
+disp(rightparticles);
+pcolor(particleMatrix);
