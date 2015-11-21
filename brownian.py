@@ -36,11 +36,10 @@ def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
     #speed = np.sqrt(np.random.normal(0,2*gamma*kB*Temp,(particleV.shape[0],1))) # Fluctuation Disspation Theorem
     #theta = 2*np.pi*np.random.rand(particleV.shape[0],1) #Random scattering angle
     #stoch = np.hstack((np.multiply(zeta,np.cos(theta)),np.multiply(zeta,np.sin(theta))))
-    #vx = np.random.normal(0,2*gamma*kB*Temp,(particleV.shape[0],1))
-    #vy = np.random.normal(0,2*gamma*kB*Temp,(particleV.shape[0],1))
-    #stoch = np.hstack((vx,vy))
-    stoch = 0
-    dV = (-gamma * particleV + stoch)/particleM * timeStep
+    stoch = np.random.normal(0,np.sqrt(2*gamma*kB*Temp),(particleV.shape[0],2))
+    drag = -gamma * particleV
+    #drag = 0
+    dV = (drag + stoch)/particleM * timeStep
     #print("Initial Velocities: " + str(particleV))
     #print("mass of particle (kg): " + str(particleM))
     #print("damping coefficient (SI):" + str(gamma))
@@ -78,8 +77,8 @@ def randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
     # a = effective radius
 
     gamma = (6*np.pi*eta*particleR)   
-    xHistory = np.zeros((NP,2,totalSteps))
-    vHistory = np.zeros((NP,2,totalSteps))
+    #xHistory = np.zeros((NP,2,totalSteps))
+    #vHistory = np.zeros((NP,2,totalSteps))
     
     particleX,particleV = genIC(kB,NP,particleM,Temp)
     #print(particleX)
@@ -87,9 +86,10 @@ def randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
     print(totalEnergy(kB,particleM,particleV,Temp))
 
     for i in range(0,totalSteps):
-        #print(i)
-        xHistory[:,:,i] = particleX[:,:]
-        vHistory[:,:,i] = particleV[:,:]
+        if i%10000 == 0:
+            print(i)
+        #xHistory[:,:,i] = particleX[:,:]
+        #vHistory[:,:,i] = particleV[:,:]
         
         particleV = updateV(gamma,kB,particleM,particleV,Temp,timeStep)
         #print(totalEnergy(kB,particleM,particleV,Temp))
@@ -98,14 +98,14 @@ def randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
         #particleX,particleV = handleCollision(projectedX,particleV, wallParam)
         particleX = projectedX
     print(totalEnergy(kB,particleM,particleV,Temp))
-    return xHistory,vHistory
-
+    #return xHistory,vHistory
+    return particleX,particleV
 
 #plotState(particleX,particleV)
 kB = 1.4*10**(-23) # Boltzmann's constant
 
 totalTime = 1e-8 # seconds of diffusion
-NP = 1
+NP = 100
 Temp = 300 # 300 Kelvin
 particleM = 3 * 10 ** -26 # molecular mass of water in kg
 particleR = 1 * 10 ** -10 # water is a one angstrom radius sphere, yolo
@@ -116,9 +116,7 @@ D = Temp * kB / gamma
 tau = particleR**2 / D
 print("tau = " + str(tau))
 timeStep = tau
-totalSteps = 1000000 #int(totalTime / timeStep)
-
-particleX, particleV = genIC(kB,10000,particleM,Temp)
+totalSteps = 100000 #int(totalTime / timeStep)
 
 xHistory,vHistory = randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
 
