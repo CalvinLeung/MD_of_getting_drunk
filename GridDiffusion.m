@@ -1,11 +1,11 @@
-gridSize = 100; % make this even
+gridSize = 10000; % make this even
 particles = 100;
-wallGap = 5;
+wallGap = 1;
 xPos = zeros(1,particles);
 yPos = zeros(1,particles);
 wallProfile = zeros(1,gridSize);
 wallPos = gridSize/2;
-timesteps = 9000;
+timesteps = 5000;
 
 % initialize the wall
 for i = 1:gridSize
@@ -36,10 +36,6 @@ end
 for t = 1:timesteps
     leftparticles = 0;
     rightparticles = 0;
-    particleMatrix = zeros(gridSize);
-    for k = 1:gridSize
-       particleMatrix(wallPos, k) = 2*wallProfile(k); 
-    end
     for p = 1:particles
         % only allow certain directions
         allowedDirs = [1,1,1,1]; % up, down, right, left
@@ -84,23 +80,27 @@ for t = 1:timesteps
         if dir == 4
             xPos(p)=xPos(p)-1; % go left
         end
-        
-        if xPos(p) >= wallPos
-            rightparticles = rightparticles + 1;
-        else
-            leftparticles = leftparticles + 1;
-        end
-        
-        particleMatrix(xPos(p), yPos(p)) = 1;
-        
     end 
     %disp(t);
     %disp(leftparticles);
     %disp(rightparticles);
-end
+    end
 
-% output matrix
-disp(t);
+% calculate grid matrix 
+gridMatrix = zeros(gridSize);
+for k = 1:gridSize
+     gridMatrix(wallPos, k) = 2*wallProfile(k);
+end
+for p = 1:particles
+    gridMatrix(xPos(p), yPos(p)) = 1;
+    if xPos(p) >= wallPos
+        rightparticles = rightparticles + 1;
+    else
+        leftparticles = leftparticles + 1;
+    end
+end
+    
+% output particle distribution
 disp(leftparticles);
 disp(rightparticles);
-pcolor(particleMatrix);
+%pcolor(gridMatrix);
