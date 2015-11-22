@@ -31,14 +31,13 @@ def totalEnergy(kB,particleM,particleV,Temp):
     T = 0.5 * particleM * sum(particleV[:,0] ** 2 + particleV[:,1] ** 2) / NP
     print('Observed average kinetic energy per particle (NP = ' + str(NP) + ') = ' +str(T))
     print('Equipartition predicts 2 QDOF: ' + str(kB*Temp))
+    return T
     
 def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
-    #speed = np.sqrt(np.random.normal(0,2*gamma*kB*Temp,(particleV.shape[0],1))) # Fluctuation Disspation Theorem
-    #theta = 2*np.pi*np.random.rand(particleV.shape[0],1) #Random scattering angle
-    #stoch = np.hstack((np.multiply(zeta,np.cos(theta)),np.multiply(zeta,np.sin(theta))))
     stoch = np.random.normal(0,np.sqrt(2*gamma*kB*Temp),(particleV.shape[0],2))
     drag = -gamma * particleV
     #drag = 0
+    #print(np.mean(stoch ** 2) / np.mean(drag ** 2))
     dV = (drag + stoch)/particleM * timeStep
     #print("Initial Velocities: " + str(particleV))
     #print("mass of particle (kg): " + str(particleM))
@@ -81,25 +80,21 @@ def randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
     #vHistory = np.zeros((NP,2,totalSteps))
     
     particleX,particleV = genIC(kB,NP,particleM,Temp)
-    #print(particleX)
-    #print(particleV)
-    print(totalEnergy(kB,particleM,particleV,Temp))
-
+    print(totalEnergy(kB,particleM,particleV,Temp))    
     for i in range(0,totalSteps):
         if i%10000 == 0:
             print(i)
         #xHistory[:,:,i] = particleX[:,:]
         #vHistory[:,:,i] = particleV[:,:]
-        
         particleV = updateV(gamma,kB,particleM,particleV,Temp,timeStep)
         #print(totalEnergy(kB,particleM,particleV,Temp))
         projectedX = particleX + particleV * timeStep
         #Handle collisions
         #particleX,particleV = handleCollision(projectedX,particleV, wallParam)
         particleX = projectedX
-    print(totalEnergy(kB,particleM,particleV,Temp))
-    #return xHistory,vHistory
-    return particleX,particleV
+    print(totalEnergy(kB,particleM,particleV,Temp))    
+
+    return particleX
 
 #plotState(particleX,particleV)
 kB = 1.4*10**(-23) # Boltzmann's constant
@@ -118,7 +113,7 @@ print("tau = " + str(tau))
 timeStep = tau
 totalSteps = 100000 #int(totalTime / timeStep)
 
-xHistory,vHistory = randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
+energies = randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
 
 #for i in range(timeSteps):
 #    plotState(xHistory[:,:,i],vHistory[:,:,i])
