@@ -11,16 +11,18 @@ from numpy import ma
 
 
 def genIC(kB, NP, particleM, Temp):
-    particleX = np.random.rand(NP,2)
+    particleX = np.random.rand(NP,3)
     particleX[:,0] = 0.5 * particleX[:,0]
     #speed = np.random.normal(0,particleM/(2 * kB * Temp),(NP,1)) # Boltzmann factor for some speed
     #angle = np.random.rand(NP,1) * 2 * np.pi
     #particleV = np.hstack((np.multiply(speed,np.cos(angle)),np.multiply(speed,np.sin(angle))))
 
-    particleV = np.random.normal(0,np.sqrt(kB*Temp/particleM),(NP,2))
+    #particleV = np.random.normal(0,np.sqrt(kB*Temp/particleM),(NP,2))
+    particleV = np.zeros((NP,3))
     return (particleX, particleV)
 
 def plotState(particleX, particleV):
+    #Plots projection onto XY plane.
     plt.figure()
     Q = plt.quiver(particleX[:,0],particleX[:,1],particleV[:,0],particleV[:,1])
     plt.show()
@@ -28,17 +30,17 @@ def plotState(particleX, particleV):
 
 def totalEnergy(kB,particleM,particleV,Temp):
     NP = particleV.shape[0]
-    T = 0.5 * particleM * sum(particleV[:,0] ** 2 + particleV[:,1] ** 2) / NP
+    T = 0.5 * particleM * sum(particleV[:,0] ** 2 + particleV[:,1] ** 2 + particleV[:,2] ** 2) / NP
     print('Observed average kinetic energy per particle (NP = ' + str(NP) + ') = ' +str(T))
-    print('Equipartition predicts 2 QDOF: ' + str(kB*Temp))
+    print('Equipartition predicts 3 QDOF: ' + str(1.5 * kB *Temp))
     return T
     
 def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
-    stoch = np.random.normal(0,np.sqrt(2*gamma*kB*Temp),(particleV.shape[0],2))
+    stoch = np.random.normal(0,np.sqrt(2*gamma*kB*Temp),(particleV.shape[0],3))
     drag = -gamma * particleV
     #drag = 0
     #print(np.mean(stoch ** 2) / np.mean(drag ** 2))
-    dV = (drag + stoch)/particleM * timeStep
+    dV = ((drag + stoch)/particleM)* timeStep
     #print("Initial Velocities: " + str(particleV))
     #print("mass of particle (kg): " + str(particleM))
     #print("damping coefficient (SI):" + str(gamma))
@@ -46,14 +48,11 @@ def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
     return particleV + dV
 
 def handleCollision(particleV,projectedX,wallParam):
-    particleX = projectedX
     # Reflect off a wall
     for i in range(projectedX.shape[0]):
-        x,y = projectedX[i,:]
-        xd,yd = particleV[i,:]
+        x,y,z = projectedX[i,:]
+        xd,yd,zd = particleV[i,:]
         while(x < 0 or x > 1 or y < 0 or y > 1):
-            print('wall collision')
-            print('(x,y) = ' + str((x,y)) + ' being reflected...')
             if x < 0:
                 x = abs(x)
                 xd = -xd
@@ -66,8 +65,14 @@ def handleCollision(particleV,projectedX,wallParam):
             elif y > 1:
                 y = 2 - y
                 yd = -yd           
-        particleX[i,:] = [x,y]
-        particleV[i,:] = [xd,yd]
+            elif z < 0:
+                z = abs(z)
+                zd = -zd
+            elif z > 1:
+                z = 2 - z
+                zd = -zd
+        particleX[i,:] = [x,y,z]
+        particleV[i,:] = [xd,yd,zd]
     return particleX,particleV
 
 def randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam):
@@ -80,10 +85,13 @@ def randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
     #vHistory = np.zeros((NP,2,totalSteps))
     
     particleX,particleV = genIC(kB,NP,particleM,Temp)
-    print(totalEnergy(kB,particleM,particleV,Temp))    
+    print(totalEnergy(kB,particleM,particleV,Temp))
+    energies = []
     for i in range(0,totalSteps):
         if i%10000 == 0:
             print(i)
+            #plotState(particleX,particleV)
+            energies.append(totalEnergy(kB,particleM,particleV,Temp))
         #xHistory[:,:,i] = particleX[:,:]
         #vHistory[:,:,i] = particleV[:,:]
         particleV = updateV(gamma,kB,particleM,particleV,Temp,timeStep)
@@ -94,13 +102,13 @@ def randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
         particleX = projectedX
     print(totalEnergy(kB,particleM,particleV,Temp))    
 
-    return particleX
+    return energies
 
 #plotState(particleX,particleV)
 kB = 1.4*10**(-23) # Boltzmann's constant
 
 totalTime = 1e-8 # seconds of diffusion
-NP = 100
+NP = 10
 Temp = 300 # 300 Kelvin
 particleM = 3 * 10 ** -26 # molecular mass of water in kg
 particleR = 1 * 10 ** -10 # water is a one angstrom radius sphere, yolo
@@ -111,7 +119,7 @@ D = Temp * kB / gamma
 tau = particleR**2 / D
 print("tau = " + str(tau))
 timeStep = tau
-totalSteps = 100000 #int(totalTime / timeStep)
+totalSteps = 50000000 #int(totalTime / timeStep)
 
 energies = randomWalk(eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
 
