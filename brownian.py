@@ -49,34 +49,49 @@ def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
     #print("change in velocity: " + str(dV))
     return particleV + dV
 
-def handleCollision(boxSize, particleV,projectedX,wallParam):
-    # Reflect off a wall
+# def handleCollision(boxSize, particleV,projectedX,wallParam):
+#     # Reflect off a wall
+#     b = boxSize
+#     for i in range(projectedX.shape[0]):
+#         x,y,z = projectedX[i,:]
+#         xd,yd,zd = particleV[i,:]
+#         while(x < 0 or x > b or y < 0 or y > b or z<0 or z>b):
+#             if x < 0:
+#                 x = abs(x)
+#                 xd = -xd
+#             elif x > b:
+#                 x = 2*b - x
+#                 xd = -xd
+#             elif y < 0:
+#                 y = abs(y)
+#                 yd = -yd
+#             elif y > b:
+#                 y = 2*b - y
+#                 yd = -yd           
+#             elif z < 0:
+#                 z = abs(z)
+#                 zd = -zd
+#             elif z > b:
+#                 z = 2*b - z
+#                 zd = -zd
+#         projectedX[i,:] = [x,y,z]
+#         particleV[i,:] = [xd,yd,zd]
+#     return projectedX,particleV
+
+def handleCollision(boxSize, particleV, projectedX, wallParam, NP):
     b = boxSize
-    for i in range(projectedX.shape[0]):
+    for i in range(NP):
+        j = 1
         x,y,z = projectedX[i,:]
         xd,yd,zd = particleV[i,:]
-        while(x < 0 or x > b or y < 0 or y > b):
-            if x < 0:
-                x = abs(x)
-                xd = -xd
-            elif x > b:
-                x = 2*b - x
-                xd = -xd
-            elif y < 0:
-                y = abs(y)
-                yd = -yd
-            elif y > b:
-                y = 2*b - y
-                yd = -yd           
-            elif z < 0:
-                z = abs(z)
-                zd = -zd
-            elif z > b:
-                z = 2*b - z
-                zd = -zd
-        projectedX[i,:] = [x,y,z]
+        # if x<0 or x>b:
+        #     xd = -xd
+        # if y<0 or y>b:
+        #     yd = -yd
+        # if z<0 or z>b:
+        #     zd = -zd
         particleV[i,:] = [xd,yd,zd]
-    return projectedX,particleV
+    return projectedX, particleV
 
 def randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam):
     # gamma = 6*pi*eta*a, where
@@ -112,7 +127,7 @@ def randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wa
         #print(totalEnergy(kB,particleM,particleV,Temp))
         projectedX = particleX + particleV * timeStep
         #Handle collisions
-        particleX, particleV = handleCollision(boxSize, particleV,projectedX, wallParam)
+        particleX, particleV = handleCollision(boxSize, particleV,projectedX, wallParam, NP)
         #particleX = projectedX
     
     totalEnergy(kB,particleM,particleV,Temp)
