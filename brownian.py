@@ -79,18 +79,14 @@ def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
 #     return projectedX,particleV
 
 def handleCollision(boxSize, particleV, projectedX, wallParam, NP):
-    b = boxSize
-    for i in range(NP):
-        j = 1
-        x,y,z = projectedX[i,:]
-        xd,yd,zd = particleV[i,:]
-        # if x<0 or x>b:
-        #     xd = -xd
-        # if y<0 or y>b:
-        #     yd = -yd
-        # if z<0 or z>b:
-        #     zd = -zd
-        particleV[i,:] = [xd,yd,zd]
+    toohigh = projectedX > boxSize
+    toolow  = projectedX < 0
+
+    particleV[toolow] = -particleV[toolow]
+    particleV[toohigh]= -particleV[toohigh]
+
+    projectedX[toolow] = -projectedX[toolow]
+    projectedX[toohigh] = 2*boxSize - projectedX[toohigh]
     return projectedX, particleV
 
 def randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam):
@@ -138,13 +134,13 @@ def randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wa
             left += 1
         else:
             right += 1
-    return left, right
+    return particleX,particleV
 
 #plotState(particleX,particleV)
 kB = 1.4*10**(-23) # Boltzmann's constant
 boxSize = 2e-6 # Our box is 2 mu m right now 
 #totalTime = 1e-8 # seconds of diffusion
-NP = 100
+NP = 10
 Temp = 310 # 310 Kelvin
 particleM = (162.0/18.0)*(3 * 10 ** (-26)) # molecular mass of nicotine in kg
 particleR = 3 * 10 ** (-10) # nicotine is a three angstrom radius sphere, yolo
@@ -155,11 +151,11 @@ gamma = 6*np.pi*eta*particleR
 #tau = particleR**2 / D
 #print("tau = " + str(tau))
 #print("tv = " + str(particleM/gamma))
-timeStep = 1e-13
+timeStep = 1e-11
 totalSteps = 100000 #int(totalTime / timeStep)
 
-energies = randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
-
+particleX, particleV = randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
+plotState(particleX,particleV)
 #for i in range(timeSteps):
 #    plotState(xHistory[:,:,i],vHistory[:,:,i])
 #    input('t = '+str(i))
