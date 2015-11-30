@@ -81,33 +81,36 @@ def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
 
 def membraneCheck(projectedX, wallParam, boxSize, particleR,NP):
     holeSize = wallParam[0]
-    ratio = wallParam[1]
-    wallSize = ratio*holeSize
-    modArray = (holeSize + wallSize)*np.ones(NP)
+    wallSize = wallParam[1]
+    modArray = (holeSize + wallSize)
     # check if collision with wall in x coordinate
     # AND if y/z coordinates collide with membrane
     # AND prevent sneakarounds
-    return ((projectedX[:,0] < (particleR + 0.5*boxSize))*(projectedX[:,0] > (-particleR + 0.5*boxSize))) \
-                  * ((np.fmod(projectedX[:,1],modArray) < wallSize) + (np.fmod(projectedX[:,2],modArray) < wallSize)) \
-                  #+ (projectedX[:,1] < 0) + (projectedX[:,1] > boxSize))#check if outside the box in y axis (so that the particle can't sneak around the side)
+    return ((projectedX[:,0] < particleR + 0.5*boxSize)*(projectedX[:,0] > -particleR + 0.5*boxSize)) \
+                  * ((np.fmod(projectedX[:,1],modArray) < wallSize) + (np.fmod(projectedX[:,2],modArray) < wallSize) \
+                  + (projectedX[:,1] < 0) + (projectedX[:,1] > boxSize) + (projectedX[:,2] < 0) + (projectedX[:,2] > boxSize))
 
 def handleCollision(boxSize, particleV, projectedX, wallParam, NP, particleR):
     # Check if x & y coordinates are out of the range (0, boxSize)
     projectedX[:,2] = np.fmod(projectedX[:,2],boxSize)
+    projectedX[:,1] = np.fmod(projectedX[:,1],boxSize)
     toohigh = projectedX > boxSize - particleR
     toolow  = projectedX < 0 + particleR
-    #hitMembraneRight = (particleV[:,0] >= 0) * membraneCheck(projectedX, wallParam, boxSize, particleR,NP) 
-    #hitMembraneLeft = (particleV[:,0] < 0) * membraneCheck(projectedX, wallParam, boxSize, particleR,NP)
-    
+    hitMembraneRight = (particleV[:,0] >= 0) * membraneCheck(projectedX, wallParam, boxSize, particleR,NP) 
+    hitMembraneLeft = (particleV[:,0] < 0) * membraneCheck(projectedX, wallParam, boxSize, particleR,NP)
+    #print(membraneCheck(projectedX, wallParam, boxSize, particleR,NP))
+    #print(hitMembraneRight)
+    #print(hitMembraneLeft)
+
     particleV[toolow] = -particleV[toolow]
     particleV[toohigh]= -particleV[toohigh]
-    #particleV[hitMembraneRight,0] = -particleV[hitMembraneRight,0]
-    #particleV[hitMembraneLeft,0] = -particleV[hitMembraneLeft,0]
+    particleV[hitMembraneRight,0] = -particleV[hitMembraneRight,0]
+    particleV[hitMembraneLeft,0] = -particleV[hitMembraneLeft,0]
 
     projectedX[toolow] = -projectedX[toolow] + particleR
     projectedX[toohigh] = 2*boxSize - projectedX[toohigh] - particleR
-    #projectedX[hitMembraneRight,0] = 2*(0.5*boxSize - particleR) - projectedX[hitMembraneRight,0]
-    #projectedX[hitMembraneLeft,0] = 2*(0.5*boxSize + particleR) - projectedX[hitMembraneLeft,0] 
+    projectedX[hitMembraneRight,0] = 2*(0.5*boxSize - particleR) - projectedX[hitMembraneRight,0]
+    projectedX[hitMembraneLeft,0] = 2*(0.5*boxSize + particleR) - projectedX[hitMembraneLeft,0] 
 
     return projectedX, particleV
 
@@ -135,14 +138,14 @@ def randomWalk(boxSize,eta,kB,NP,particleM,particleR,particleV0,particleX0,Temp,
     return particleX,particleV
 
 kB = 1.4*10**(-23) # Boltzmann's constant
-boxSize = 2e-6 # Our box is 2 mu m right now 
+boxSize = 1e-6 # Our box is 1 mu m right now 
 #totalTime = 1e-8 # seconds of diffusion
 NP = 400 # typical nicotine concentration in blood
 Temp = 310 # 310 Kelvin
 particleM = (162.0/18.0)*(3 * 10 ** (-26)) # molecular mass of nicotine in kg
 particleR = 3 * 10 ** (-10) # nicotine is a three angstrom radius sphere, yolo
 eta = 1.0 * 10 ** (-6) # viscosity of water in m^2 / s
-wallParam = [1,1] #[Hole Size (side), hole to wall ratio]
+wallParam = [0.1*boxSize,0.1*boxSize] #[Hole Size (side), Wall Size]
 gamma = 6*np.pi*eta*particleR
 timeStep = 1e-11
 totalSteps = 100000 #int(totalTime / timeStep)
@@ -178,6 +181,3 @@ def beforeAfter(particleX0,particleV0,particleX,particleV,boxSize):
         ax2.set_ylabel('Y axis (impenetrable walls)')
         ax2.set_zlabel('Z axis (periodic boundary )')
         plt.show()
-    
-#if __name__ == "__main__":
-#    main()
