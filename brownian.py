@@ -79,11 +79,16 @@ def membraneCheck(projectedX, wallParam, boxSize, particleR,NP):
     ratio = wallParam[1]
     wallSize = ratio*holeSize
     modArray = (holeSize + wallSize)*np.ones(NP)
+    # check if collision with wall in x coordinate
+    # AND if y/z coordinates collide with membrane
+    # AND prevent sneakarounds
     return ((projectedX[:,0] < particleR + 0.5*boxSize)*(projectedX[:,0] > -particleR + 0.5*boxSize)) \
-                  * ((np.fmod(projectedX[:,1],modArray) < wallSize) + (np.fmod(projectedX[:,2],modArray) < wallSize) \
+                  * ((np.fmod(projectedX[:,1],modArray) < wallSize) * (np.fmod(projectedX[:,2],modArray) < wallSize) \
                   + (projectedX[:,1] < 0) + (projectedX[:,1] > boxSize) + (projectedX[:,2] < 0) + (projectedX[:,2] > boxSize))#check if outside the box (so that the particle can't sneak around the side)
 
 def handleCollision(boxSize, particleV, projectedX, wallParam, NP, particleR):
+    # Check if x & y coordinates are out of the range (0, boxSize)
+    projectedX[:,2] = np.fmod(projectedX[:,2],boxSize)
     toohigh = projectedX > boxSize - particleR
     toolow  = projectedX < 0 + particleR
     hitMembraneRight = particleV[:,0] >= 0 * membraneCheck(projectedX, wallParam, boxSize, particleR,NP) 
