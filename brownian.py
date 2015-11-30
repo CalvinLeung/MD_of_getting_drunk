@@ -6,6 +6,7 @@
 # Temp - temperature which dictates thermal distribution (set k_B = 1)
 
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from numpy import ma
 
@@ -21,12 +22,22 @@ def genIC(boxSize, kB, NP, particleM, Temp):
     #particleV = np.zeros((NP,3))
     return (particleX, particleV)
 
-def plotState(particleX, particleV):
-    #Plots projection onto XY plane.
-    plt.figure()
-    Q = plt.quiver(particleX[:,0],particleX[:,1],particleV[:,0],particleV[:,1])
-    plt.show()
-    return 0
+def getState(boxSize,particleV, particleX,plot=False):
+    #3D quiver plots and particle counting
+    NP = particleX.shape[0]
+    if plot:
+        normalizedX = np.copy(particleX) 
+        normalizedV = np.copy(particleV)
+    
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        plt.axis([0,boxSize,0,boxSize])
+        ax.set_zbound(lower=0, upper=boxSize)
+        ax.quiver(normalizedX[:,0],normalizedX[:,1],normalizedX[:,2],normalizedV[:,0],normalizedV[:,1],normalizedV[:,2],
+                  length = 0.05 * boxSize)
+        plt.show()
+    left = np.sum(particleX[:,0] < boxSize * 0.5,dtype=int)
+    return left, NP-left #left and right halves 
 
 def totalEnergy(kB,particleM,particleV,Temp):
     NP = particleV.shape[0]
@@ -38,15 +49,7 @@ def totalEnergy(kB,particleM,particleV,Temp):
 def updateV(gamma,kB,particleM,particleV,Temp,timeStep):
     stoch = np.sqrt(24*kB*Temp*gamma/timeStep)*np.random.normal(0,np.sqrt(1.0/12.0),(particleV.shape[0],3))
     drag = -gamma * particleV
-    #print("stoch is" + str(stoch))
-    #print("drag is " + str(drag))
-    #drag = 0
-    #print(np.mean(stoch ** 2) / np.mean(drag ** 2))
     dV = ((drag + stoch)/particleM) * timeStep
-    #print("Initial Velocities: " + str(particleV))
-    #print("mass of particle (kg): " + str(particleM))
-    #print("damping coefficient (SI):" + str(gamma))
-    #print("change in velocity: " + str(dV))
     return particleV + dV
 
 # def handleCollision(boxSize, particleV,projectedX,wallParam):
@@ -93,54 +96,32 @@ def randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wa
     # gamma = 6*pi*eta*a, where
     # eta = fluid viscosity
     # a = effective radius
-
+    lefts = np.zeros(totalSteps)
     gamma = (6*np.pi*eta*particleR)   
     #xHistory = np.zeros((NP,2,totalSteps))
     #vHistory = np.zeros((NP,2,totalSteps))
-    
     particleX,particleV = genIC(boxSize,kB,NP,particleM,Temp)
+    left,right = getState(boxSize, particleV, particleX, True)
+    input('Press Enter')
     totalEnergy(kB,particleM,particleV,Temp)
-    left = 0
-    right = 0
+    
     for i in range(0,totalSteps):
+        lefts[i],right = getState(boxSize, particleV, particleX, plot=False)
         if i%10000 == 0:
-            left = 0
-            right = 0
-            for j in range(0,NP):
-                if particleX[j,0] < 0.5*boxSize:
-                    left += 1
-                else:
-                    right += 1
-            print(i)
-            print("# on left: " + str(left))
+            print("Timestep: "   +  str(i))
+            print("# on left: "  + str(lefts[i]))
             print("# on right: " + str(right))
-            #plotState(particleX,particleV)
-            #energies.append(totalEnergy(kB,particleM,particleV,Temp))
-            #print(particleX)
-        #xHistory[:,:,i] = particleX[:,:]
-        #vHistory[:,:,i] = particleV[:,:]
         particleV = updateV(gamma,kB,particleM,particleV,Temp,timeStep)
-        #print(totalEnergy(kB,particleM,particleV,Temp))
         projectedX = particleX + particleV * timeStep
         #Handle collisions
         particleX, particleV = handleCollision(boxSize, particleV,projectedX, wallParam, NP)
-        #particleX = projectedX
-    
     totalEnergy(kB,particleM,particleV,Temp)
-    left = 0
-    right = 0
-    for j in range(0,NP):
-        if particleX[j,0] < 0.5*boxSize:
-            left += 1
-        else:
-            right += 1
-    return particleX,particleV
+    return lefts,particleX,particleV
 
-#plotState(particleX,particleV)
 kB = 1.4*10**(-23) # Boltzmann's constant
 boxSize = 2e-6 # Our box is 2 mu m right now 
 #totalTime = 1e-8 # seconds of diffusion
-NP = 10
+NP = 100
 Temp = 310 # 310 Kelvin
 particleM = (162.0/18.0)*(3 * 10 ** (-26)) # molecular mass of nicotine in kg
 particleR = 3 * 10 ** (-10) # nicotine is a three angstrom radius sphere, yolo
@@ -151,14 +132,11 @@ gamma = 6*np.pi*eta*particleR
 #tau = particleR**2 / D
 #print("tau = " + str(tau))
 #print("tv = " + str(particleM/gamma))
-timeStep = 1e-11
-totalSteps = 100000 #int(totalTime / timeStep)
+timeStep = 1e-13
+totalSteps = 10000000 #int(totalTime / timeStep)
 
-particleX, particleV = randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
-plotState(particleX,particleV)
-#for i in range(timeSteps):
-#    plotState(xHistory[:,:,i],vHistory[:,:,i])
-#    input('t = '+str(i))
+lefts,particleX,particleV = randomWalk(boxSize,eta,kB,NP,particleM,particleR,Temp,timeStep,totalSteps,wallParam)
+getState(boxSize,particleV,particleX,True)
     
 #if __name__ == "__main__":
 #    main()
