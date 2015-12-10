@@ -101,14 +101,14 @@ def TSPlot(timeSeries,timeStep):
     plt.show()
     return plt
 
-pTrans = 1
+pTrans = 0
 kB = 1.4*10**(-23) # Boltzmann's constant
 boxSize = 2e-6 # Our box is 2 mu m right now 
 #totalTime = 1e-8 # seconds of diffusion
-NP = 400 # typical nicotine concentration in blood
+NP = 1000 # typical ethanol concentration in blood
 Temp = 310 # 310 Kelvin
-particleM = (162.0/18.0)*(3 * 10 ** (-26)) # molecular mass of nicotine in kg
-particleR = 2.05 * 10 ** (-10) # ethanol is a two angstrom radius sphere, yolo
+particleM = (7.65 * 10 ** (-26)) # molecular mass of nicotine in kg
+particleR = 2.33 * 10 ** (-10) # ethanol is a two angstrom radius sphere, yolo
 eta = 1.0 * 10 ** (-6) # viscosity of water in m^2 / s
 wallParam = [1,1] #[Hole Size (side), hole to wall ratio]
 gamma = 6*np.pi*eta*particleR
