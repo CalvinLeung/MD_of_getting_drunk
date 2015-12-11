@@ -1,4 +1,4 @@
-# Brownian Motion on the Unit Square
+# Brownian Motion on the Unit Cube
 # Parameters
 # wallParameter - wall spacing (given in terms of [side length of hole, wall to hole ratio])
 # particleM - effective particle mass
@@ -181,3 +181,5 @@ def beforeAfter(particleX0,particleV0,particleX,particleV,boxSize):
     
 #if __name__ == "__main__":
 #    main()
+
+def 
