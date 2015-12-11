@@ -101,7 +101,7 @@ def TSPlot(timeSeries,timeStep):
     plt.show()
     return plt
 
-pTrans = 0
+pTrans = 0.1
 kB = 1.4*10**(-23) # Boltzmann's constant
 boxSize = 2e-6 # Our box is 2 mu m right now 
 #totalTime = 1e-8 # seconds of diffusion
